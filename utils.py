@@ -2,7 +2,7 @@ from rouge_score import rouge_scorer
 from rouge import Rouge
 from nltk import PorterStemmer
 import numpy as np
-from simcse import SimCSE
+from sentence_transformers import CrossEncoder
 from sacrebleu.metrics import BLEU
 from passage_embedder import get_summary_similarity
 from constants import DEVICE
@@ -12,7 +12,7 @@ from sentence_transformers import SentenceTransformer, util
 SCORER_VERSION = {'ELI5': False, 'SELF': True}
 SCORER_VERSION_EVAL = {'ELI5': True, 'SELF': False}
 stemmer = PorterStemmer()
-sim_cse_model = SimCSE("princeton-nlp/sup-simcse-roberta-large")
+DeTs_model = CrossEncoder('abbasgolestani/ag-nli-DeTS-sentence-similarity-v2')
 sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def get_text_similarity(pred_text, true_text, **kwargs):
@@ -35,7 +35,7 @@ def get_text_similarity(pred_text, true_text, **kwargs):
         total_score += scores['rouge-l']['r'] * 100 # Returning the recall only, on a 0-100 scale
 
     if kwargs['use-sim-score']:
-        total_score += sim_cse_model.similarity(pred_text, true_text) * 100
+        total_score += (DeTs_model.predict([pred_text, true_text])-0.5) * 200
     if kwargs['use-sbert-score']:
         pred_encode = sbert_model.encode(pred_text, convert_to_tensor=True)
         true_encode = sbert_model.encode(true_text, convert_to_tensor=True)
